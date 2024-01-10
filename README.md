@@ -8,10 +8,8 @@
 - CUDA 11.7
 
 ### Datasets
-#### thirdeye
-Data is from [here](https://dl.acm.org/doi/abs/10.1145/3191752), and you can [download](https://drive.google.com/drive/folders/1onxwxoWCcORa51cxp5VIbFU7GzT0dO-m?usp=drive_link) preprocessed data files.
-#### crawler
-Data is crawl down from [here](https://www.tour-beijing.com/real_time_weather_photo/).
+(1) Data is from [here](https://dl.acm.org/doi/abs/10.1145/3191752), and you can [download](https://drive.google.com/drive/folders/1onxwxoWCcORa51cxp5VIbFU7GzT0dO-m?usp=drive_link) preprocessed data files.
+(2) Data is crawl down from [here](https://www.tour-beijing.com/real_time_weather_photo/).
 You can put the downloaded datasets into `dataset/` directory.
 
 ### Pretrained weights
@@ -22,11 +20,4 @@ You can put the downloaded weights into `pt/` directory.
 Running the following command:
 ```
 bash ./exp/exp_mmair.sh <config.json>
-```
-
-### Call tensorboard for visualization
-
-e.g.:
-```shell
-tensorboard --logdir ./saved/thirdeye/version_11/pt --host 10.3.242.137
 ```
