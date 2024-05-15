@@ -21,19 +21,20 @@ class AirEmbedding(nn.Module):
         self.proj_m = nn.LSTM(self.origfeat_dim_m, self.embed_dim, 1, batch_first=True)
         
         if self.pretrained_type == 'resnet':
-            pre_model = models.resnet50(pretrained=True)
-            children = nn.Sequential(*(list(pre_model.children())[:-2]))
-            self.pre_extractor = nn.Sequential(
-                children,
-                nn.Conv2d(2048, 1024, kernel_size=1),
-                nn.ReLU(),  
-                nn.AdaptiveAvgPool2d((1, 1)),
-            )
-            self.origfeat_dim_o = 1024
-        elif self.pretrained_type == 'custom':
-            self.pre_extractor = CustomHazeExtractor(args.train_mode)
-            self.pre_extractor.set_return_feat(True)
-            self.origfeat_dim_o = 64
+            if self.pretrained_type == 'resnet':
+                pre_model = models.resnet50(pretrained=True)
+                children = nn.Sequential(*(list(pre_model.children())[:-2]))
+                self.pre_extractor = nn.Sequential(
+                    children,
+                    nn.Conv2d(2048, 1024, kernel_size=1),
+                    nn.ReLU(),  
+                    nn.AdaptiveAvgPool2d((1, 1)),
+                )
+                self.origfeat_dim_o = 1024
+            elif self.pretrained_type == 'custom':
+                self.pre_extractor = CustomHazeExtractor(args.train_mode)
+                self.pre_extractor.set_return_feat(True)
+                self.origfeat_dim_o = 64
 
         self.proj_o = nn.Conv2d(self.origfeat_dim_o, self.embed_dim, kernel_size=3, padding=0, bias=False)
         self.proj_a = nn.Conv1d(self.pred_embed_size, self.embed_dim, kernel_size=1, padding=0, bias=False)
