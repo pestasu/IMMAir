@@ -20,7 +20,7 @@ class AirEmbedding(nn.Module):
         self.proj_a = nn.LSTM(self.origfeat_dim_a, self.embed_dim, 1, batch_first=True)
         self.proj_m = nn.LSTM(self.origfeat_dim_m, self.embed_dim, 1, batch_first=True)
         
-        if self.pretrained_type == 'resnet':
+        if not args.use_finetune:
             if self.pretrained_type == 'resnet':
                 pre_model = models.resnet50(pretrained=True)
                 children = nn.Sequential(*(list(pre_model.children())[:-2]))
@@ -34,7 +34,16 @@ class AirEmbedding(nn.Module):
             elif self.pretrained_type == 'custom':
                 self.pre_extractor = CustomHazeExtractor(args.train_mode)
                 self.pre_extractor.set_return_feat(True)
+                pretrained_weights = torch.load(f'pretrained/{args.pretrained_type}-{args.train_mode}-pretrained.pth')
+                state_dict = self.pre_extractor.state_dict()
+                new_state_dict = {}
+                for k, v in pretrained_weights.items():
+                    k = k.replace('module.', '')
+                    new_state_dict[k] = v
+                state_dict.update(new_state_dict)
+                self.pre_extractor.load_state_dict(state_dict)
                 self.origfeat_dim_o = 64
+
 
         self.proj_o = nn.Conv2d(self.origfeat_dim_o, self.embed_dim, kernel_size=3, padding=0, bias=False)
         self.proj_a = nn.Conv1d(self.pred_embed_size, self.embed_dim, kernel_size=1, padding=0, bias=False)
@@ -61,41 +70,3 @@ def double_conv(in_channels, out_channels):
         nn.ReLU(inplace=True)
         )
 
-class CustomHazeExtractor(nn.Module):
-    def __init__(self, train_mode='regression'):
-        super(CustomHazeExtractor,self).__init__()
-        self.dconv_down1 = double_conv(3, 64)
-        self.dconv_down2 = double_conv(64, 128)
-        self.dconv_down3 = double_conv(128, 256)
-        self.maxpool = nn.MaxPool2d(4)
-        self.upsample = nn.Upsample(scale_factor=4, mode='bilinear') #, align_corners=True)
-        self.dconv_up3 = double_conv(128 + 256, 256)
-        self.dconv_up2 = double_conv(128 + 256, 128)
-        self.dconv_up1 = double_conv(128 + 64, 64)
-        out_dim = 1 if train_mode == 'regression' else 6
-        self.conv_last = nn.Conv2d(64, out_dim, 1)
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.return_feat = False
-
-    def forward(self, x): # [16, 3, 224, 224]
-        conv1 = self.dconv_down1(x) # [16, 64, 224, 224]
-        x1 = self.maxpool(conv1) # [16, 64, 112, 112]
-        conv2 = self.dconv_down2(x1) # [16, 128, 112, 112]
-        x2 = self.maxpool(conv2) # [16, 128, 56, 56]
-        conv3 = self.dconv_down3(x2) # [16, 256, 56, 56]
-        x3 = torch.cat([x2, conv3], dim=1) # [16, 128+256, 56, 56]
-        conv4 = self.dconv_up3(x3) # [16, 256, 56, 56]
-        x4 = self.upsample(conv4) # [16, 256, 112, 112]
-        x5 = torch.cat([x4, conv2], dim=1) # [16, 384, 112, 112]
-        conv5 = self.dconv_up2(x5) # [16, 128, 112, 112]
-        x5 = self.upsample(conv5) # [16, 128, 224, 224]
-        x6 = torch.cat([x5, conv1], dim=1) # [16, 192, 224, 224]
-        conv6 = self.dconv_up1(x6) # [16, 64, 224, 224]
-        if self.return_feat: 
-            return self.avgpool(x6).platten(2)
-        x6 = self.avgpool(conv6) # [16, 64, 1, 1]
-        out = self.conv_last(x6).squeeze() # [16, 1, 1, 1]
-        return out
-    
-    def set_return_feat(self, value: bool):
-        self.return_feat = value
