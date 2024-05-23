@@ -40,11 +40,6 @@ class Trainer():
         self.args = args
         self.need_val = args.need_val
         self.train_mode = args.train_mode
-        self.lambda_l = args.lambda_l if args.model_name == 'iMMAir' else 0.
-        self.is_balance = args.is_balance if args.model_name == 'iMMAir' else False
-        self.alpha = args.alpha if args.model_name == 'iMMAir' else False
-        self.modulation_epoch = args.modulation_epoch if args.model_name == 'iMMAir' else 0.
-        self.modulation = args.modulation if args.model_name == 'iMMAir' else 0.
         self.metrics = MetricsTop().getMetics(args.train_mode)
         self.scalers = {
             'pm25': StandardScaler(*scalers['pm25']), 
@@ -186,15 +181,12 @@ class Trainer():
                         miss_1 = [0.1, 0.2, 0.3, 0.4, 0.3, 0.0, 0.0]
 
                         if miss_two / (np.round(len(dataloader['train']) / 10) * 10) < miss_2[int(self.args.mr*10-1)]:  # missing two modal
-                            # print("num_modal:1111111111")
                             outputs = self.model(aqi, meo, photo, labels, mark, num_modal=1, is_train=True)
                             miss_two += 1
                         elif miss_one / (np.round(len(dataloader['train']) / 10) * 10) < miss_1[int(self.args.mr*10-1)]:  # missing one modal
-                            # print("num_modal:2222222222")
                             outputs = self.model(aqi, meo, photo, labels, mark, num_modal=2, is_train=True)
                             miss_one += 1
                         else:  # no missing
-                            # print("num_modal:3333333333")
                             outputs = self.model(aqi, meo, photo, labels, mark, num_modal=3, is_train=True)
                     # compute loss
                     if self.args.train_mode == 'classification':
