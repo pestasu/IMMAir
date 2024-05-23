@@ -14,7 +14,7 @@ Then we develop a conditional diffusion-driven modality recovery approach to mit
 You can put the downloaded datasets into `dataset/` directory.
 
 ### Pretrained weights
-Before running missing cases, you should [download](https://drive.google.com/drive/folders/11jeaq5x8ywgAGT0uW5yOQz6ePYamlrG7?usp=drive_link) the weights pretrained by complete multimodal data of air quality(i.e., MR=0.0).
+Before running missing cases, you can [download](https://drive.google.com/drive/folders/11jeaq5x8ywgAGT0uW5yOQz6ePYamlrG7?usp=drive_link) the weights pretrained by complete multimodal data of air quality(i.e., MR=0.0).
 You can put the downloaded weights into `pt/` directory.
 
 ### Run the Codes
